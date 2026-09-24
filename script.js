@@ -10,13 +10,14 @@ const supabaseClient = window.supabase.createClient(
 
 document.addEventListener("DOMContentLoaded", loadApprovedCandidates);
 
+
 async function loadApprovedCandidates() {
 
-    const candidateList = document.getElementById("candidateList");
+    const candidateList =
+        document.getElementById("candidateList");
 
-    if (!candidateList) {
-        return;
-    }
+    if (!candidateList) return;
+
 
     candidateList.innerHTML = `
         <div class="empty-message">
@@ -26,39 +27,57 @@ async function loadApprovedCandidates() {
         </div>
     `;
 
+
     try {
 
         const { data, error } = await supabaseClient
             .from("public_candidates")
             .select("*")
-            .order("created_at", { ascending: false });
+            .order("created_at", {
+                ascending: false
+            });
+
 
         if (error) {
-            console.error("Candidate loading error:", error);
+            console.error(error);
             throw error;
         }
+
 
         if (!data || data.length === 0) {
 
             candidateList.innerHTML = `
                 <div class="empty-message">
+
                     <div class="empty-icon">👤</div>
-                    <h3>अभी कोई उम्मीदवार उपलब्ध नहीं है</h3>
+
+                    <h3>
+                        अभी कोई उम्मीदवार उपलब्ध नहीं है
+                    </h3>
+
                     <p>
                         Admin verification के बाद
                         उम्मीदवार यहाँ दिखाई देंगे।
                     </p>
+
                 </div>
             `;
 
             return;
         }
 
+
         candidateList.innerHTML = "";
+
 
         data.forEach(candidate => {
 
             const age = calculateAge(candidate.dob);
+
+
+            // ========================================
+            // PHOTO URL
+            // ========================================
 
             let photoHTML = `
                 <div class="candidate-photo-placeholder">
@@ -66,12 +85,16 @@ async function loadApprovedCandidates() {
                 </div>
             `;
 
+
             if (candidate.photo_path) {
 
-                const { data: photoData } =
-                    supabaseClient.storage
+                const {
+                    data: photoData
+                } = supabaseClient
+                    .storage
                     .from("candidate-photos")
                     .getPublicUrl(candidate.photo_path);
+
 
                 if (photoData && photoData.publicUrl) {
 
@@ -81,24 +104,39 @@ async function loadApprovedCandidates() {
                             alt="Candidate Photo"
                             class="candidate-photo"
                             loading="lazy"
-                            onerror="this.style.display='none';"
                         >
                     `;
+
                 }
             }
 
-            const card = document.createElement("div");
 
-            card.className = "candidate-card";
+            // ========================================
+            // CARD
+            // ========================================
+
+            const card =
+                document.createElement("div");
+
+            card.className =
+                "candidate-card";
+
 
             card.innerHTML = `
+
                 <div class="candidate-card-photo">
+
                     ${photoHTML}
+
                 </div>
+
 
                 <div class="candidate-card-content">
 
-                    <h3>${escapeHtml(candidate.full_name)}</h3>
+                    <h3>
+                        ${escapeHtml(candidate.full_name)}
+                    </h3>
+
 
                     <div class="candidate-info">
 
@@ -107,15 +145,18 @@ async function loadApprovedCandidates() {
                             ${escapeHtml(candidate.address)}
                         </p>
 
+
                         <p>
                             <strong>🎂 जन्म तिथि:</strong>
                             ${formatDate(candidate.dob)}
                         </p>
 
+
                         <p>
                             <strong>👤 आयु:</strong>
                             ${age} वर्ष
                         </p>
+
 
                         <p>
                             <strong>🎓 शैक्षणिक योग्यता:</strong>
@@ -124,56 +165,89 @@ async function loadApprovedCandidates() {
 
                     </div>
 
+
                     <div class="development-plan">
 
-                        <h4>🌱 गाँव के विकास की प्राथमिकताएँ</h4>
+                        <h4>
+                            🌱 गाँव के विकास की प्राथमिकताएँ
+                        </h4>
 
                         <p>
-                            ${escapeHtml(candidate.development_plan)}
+                            ${escapeHtml(
+                                candidate.development_plan
+                            )}
                         </p>
 
                     </div>
 
                 </div>
+
             `;
 
+
             candidateList.appendChild(card);
+
         });
+
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "Candidate loading error:",
+            error
+        );
+
 
         candidateList.innerHTML = `
+
             <div class="empty-message">
-                <div class="empty-icon">⚠️</div>
-                <h3>जानकारी लोड नहीं हो सकी</h3>
+
+                <div class="empty-icon">
+                    ⚠️
+                </div>
+
+                <h3>
+                    जानकारी लोड नहीं हो सकी
+                </h3>
+
                 <p>
                     कृपया कुछ समय बाद पुनः प्रयास करें।
                 </p>
+
             </div>
+
         `;
+
     }
+
 }
 
 
 // ========================================
-// CALCULATE AGE
+// AGE
 // ========================================
 
 function calculateAge(dob) {
 
-    if (!dob) {
-        return "-";
-    }
+    if (!dob) return "-";
 
-    const birthDate = new Date(dob);
-    const today = new Date();
 
-    let age = today.getFullYear() - birthDate.getFullYear();
+    const birthDate =
+        new Date(dob);
+
+    const today =
+        new Date();
+
+
+    let age =
+        today.getFullYear() -
+        birthDate.getFullYear();
+
 
     const monthDifference =
-        today.getMonth() - birthDate.getMonth();
+        today.getMonth() -
+        birthDate.getMonth();
+
 
     if (
         monthDifference < 0 ||
@@ -185,39 +259,48 @@ function calculateAge(dob) {
         age--;
     }
 
+
     return age;
 }
 
 
 // ========================================
-// FORMAT DATE
+// DATE
 // ========================================
 
 function formatDate(dateString) {
 
-    if (!dateString) {
-        return "-";
-    }
+    if (!dateString) return "-";
 
-    const date = new Date(dateString);
 
-    return date.toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric"
-    });
+    const date =
+        new Date(dateString);
+
+
+    return date.toLocaleDateString(
+        "en-IN",
+        {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric"
+        }
+    );
 }
 
 
 // ========================================
-// SECURITY: ESCAPE HTML
+// SECURITY
 // ========================================
 
 function escapeHtml(value) {
 
-    if (value === null || value === undefined) {
+    if (
+        value === null ||
+        value === undefined
+    ) {
         return "";
     }
+
 
     return String(value)
         .replace(/&/g, "&amp;")
