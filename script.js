@@ -87,28 +87,33 @@ async function loadApprovedCandidates() {
 
 
             if (candidate.photo_path) {
+    let photoUrl = candidate.photo_path;
 
-                const {
-                    data: photoData
-                } = supabaseClient
-                    .storage
-                    .from("candidate-photos")
-                    .getPublicUrl(candidate.photo_path);
+    // अगर database में पूरा HTTPS URL है
+    // तो उसे सीधे use करेंगे
+    if (!/^https?:\/\//i.test(photoUrl)) {
+        const {
+            data: photoData
+        } = supabaseClient
+            .storage
+            .from("candidate-photos")
+            .getPublicUrl(photoUrl);
 
+        photoUrl = photoData?.publicUrl || "";
+    }
 
-                if (photoData && photoData.publicUrl) {
-
-                    photoHTML = `
-                        <img
-                            src="${photoData.publicUrl}"
-                            alt="Candidate Photo"
-                            class="candidate-photo"
-                            loading="lazy"
-                        >
-                    `;
-
-                }
-            }
+    if (photoUrl) {
+        photoHTML = `
+            <img
+                src="${photoUrl}"
+                alt="Candidate Photo"
+                class="candidate-photo"
+                loading="lazy"
+                onerror="this.style.display='none';"
+            >
+        `;
+    }
+}
 
 
             // ========================================
