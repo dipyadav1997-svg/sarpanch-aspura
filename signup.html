@@ -1,12 +1,10 @@
+```html
 <!DOCTYPE html>
 <html lang="hi">
 
 <head>
-
     <meta charset="UTF-8">
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Candidate Registration - Aspura</title>
 
@@ -14,12 +12,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
-
 </head>
 
-
 <body>
-
 
 <header class="header">
 
@@ -30,17 +25,14 @@
         </div>
 
         <div>
-
             <h1>ASPURA</h1>
 
             <p>
                 सरपंच उम्मीदवार सूचना पोर्टल
             </p>
-
         </div>
 
     </div>
-
 
     <button
         class="login-btn"
@@ -53,15 +45,11 @@
 </header>
 
 
-
 <main class="form-container">
-
 
     <div class="form-card">
 
-
         <h2>Candidate Account बनाएं</h2>
-
 
         <p class="form-intro">
 
@@ -71,14 +59,11 @@
         </p>
 
 
-
         <form id="signupForm">
-
 
             <label>
                 पूरा नाम *
             </label>
-
 
             <input
                 type="text"
@@ -87,11 +72,9 @@
                 required>
 
 
-
             <label>
                 Email *
             </label>
-
 
             <input
                 type="email"
@@ -100,11 +83,9 @@
                 required>
 
 
-
             <label>
                 Password *
             </label>
-
 
             <input
                 type="password"
@@ -114,11 +95,9 @@
                 required>
 
 
-
             <label>
                 Confirm Password *
             </label>
-
 
             <input
                 type="password"
@@ -126,7 +105,6 @@
                 placeholder="Password दोबारा डालें"
                 minlength="8"
                 required>
-
 
 
             <button
@@ -140,9 +118,7 @@
 
             <div id="message"></div>
 
-
         </form>
-
 
 
         <div class="register-link">
@@ -150,7 +126,6 @@
             <p>
                 पहले से account है?
             </p>
-
 
             <button
                 class="secondary-btn"
@@ -162,16 +137,12 @@
 
         </div>
 
-
     </div>
-
 
 </main>
 
 
-
 <script>
-
 
 const supabaseClient =
     window.supabase.createClient(
@@ -180,30 +151,23 @@ const supabaseClient =
     );
 
 
-
 document
     .getElementById("signupForm")
     .addEventListener(
         "submit",
         async function(event) {
 
-
             event.preventDefault();
 
 
             const message =
-                document.getElementById(
-                    "message"
-                );
+                document.getElementById("message");
 
 
             message.textContent =
                 "Account बनाया जा रहा है...";
 
-
-            message.style.color =
-                "#333";
-
+            message.style.color = "#333";
 
 
             const fullName =
@@ -232,9 +196,9 @@ document
                 .value;
 
 
-
             try {
 
+                /* Password check */
 
                 if (
                     password !==
@@ -248,7 +212,6 @@ document
                 }
 
 
-
                 if (password.length < 8) {
 
                     throw new Error(
@@ -258,13 +221,13 @@ document
                 }
 
 
+                /* Create account */
 
                 const {
                     data,
                     error
                 } =
-                await supabaseClient.auth
-                .signUp({
+                await supabaseClient.auth.signUp({
 
                     email: email,
 
@@ -284,6 +247,7 @@ document
                 });
 
 
+                /* Supabase error */
 
                 if (error) {
 
@@ -292,73 +256,98 @@ document
                 }
 
 
+                /* Successful registration */
 
-                message.textContent =
-                    "✅ Account successfully बन गया है।";
+                if (!data || !data.user) {
 
-
-                message.style.color =
-                    "green";
-
-
-
-                /*
-                 * यदि email confirmation enabled है,
-                 * तो user को email verify करना होगा।
-                 */
-
-
-                if (
-                    data.user &&
-                    !data.session
-                ) {
-
-
-                    message.innerHTML =
-                        "✅ Account बन गया है।<br><br>" +
-                        "📧 अपने email inbox में verification link खोलें।<br>" +
-                        "फिर Login करके अपनी candidate details भरें।";
-
-
-                } else {
-
-
-                    setTimeout(
-                        function() {
-
-                            window.location.href =
-                                "candidate.html";
-
-                        },
-                        1000
+                    throw new Error(
+                        "Account create नहीं हो सका। कृपया दोबारा प्रयास करें।"
                     );
 
                 }
 
 
-            } catch (error) {
+                message.textContent =
+                    "✅ Account successfully बन गया है।";
+
+                message.style.color =
+                    "green";
 
 
-                console.error(error);
+                /*
+                 * Email verification message
+                 * intentionally removed.
+                 *
+                 * Successful registration directly
+                 * continues to candidate page.
+                 */
+
+
+                setTimeout(
+                    function() {
+
+                        window.location.href =
+                            "candidate.html";
+
+                    },
+                    800
+                );
+
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "Signup Error:",
+                    error
+                );
+
+
+                let errorMessage =
+                    error.message ||
+                    "Account create नहीं हो सका।";
+
+
+                /*
+                 * User-friendly messages
+                 */
+
+                if (
+                    errorMessage
+                    .toLowerCase()
+                    .includes("rate limit")
+                ) {
+
+                    errorMessage =
+                        "बहुत अधिक registration attempts हो चुके हैं। कृपया कुछ समय बाद दोबारा प्रयास करें।";
+
+                }
+
+
+                if (
+                    errorMessage
+                    .toLowerCase()
+                    .includes("already registered")
+                ) {
+
+                    errorMessage =
+                        "इस email से account पहले से बना हुआ है। कृपया Login करें।";
+
+                }
 
 
                 message.textContent =
-                    "❌ " +
-                    (
-                        error.message ||
-                        "Account create नहीं हो सका।"
-                    );
-
+                    "❌ " + errorMessage;
 
                 message.style.color =
                     "red";
 
             }
 
-
         }
-    );
 
+    );
 
 </script>
 
@@ -366,3 +355,4 @@ document
 </body>
 
 </html>
+```
