@@ -528,7 +528,245 @@ footer h3 {
 .error-box {
     color: #dc2626;
 }
+/* ========================================
+   PUBLIC CANDIDATE CARDS
+   ======================================== */
 
+.candidate-grid {
+    width: 100%;
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 20px;
+
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+}
+
+
+/* Candidate Card */
+
+.candidate-card {
+    background: #ffffff;
+    border-radius: 18px;
+    overflow: hidden;
+
+    border: 1px solid #e5e7eb;
+
+    box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.08);
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.candidate-card:hover {
+    transform: translateY(-5px);
+
+    box-shadow:
+        0 14px 35px rgba(0, 0, 0, 0.14);
+}
+
+
+/* ========================================
+   PHOTO
+   ======================================== */
+
+.candidate-card-photo {
+    width: 100%;
+    height: 280px;
+
+    background: #f1f5f9;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+}
+
+.candidate-photo {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+}
+
+.candidate-photo-placeholder {
+    font-size: 80px;
+    color: #94a3b8;
+}
+
+
+/* ========================================
+   CONTENT
+   ======================================== */
+
+.candidate-card-content {
+    padding: 22px;
+}
+
+.candidate-card-content h3 {
+    margin: 0 0 18px;
+
+    font-size: 24px;
+    font-weight: 700;
+
+    color: #172554;
+
+    text-align: center;
+}
+
+
+/* ========================================
+   INFORMATION
+   ======================================== */
+
+.candidate-info {
+    border-top: 1px solid #e5e7eb;
+    padding-top: 15px;
+}
+
+.candidate-info p {
+    margin: 10px 0;
+
+    font-size: 15px;
+    line-height: 1.6;
+
+    color: #374151;
+}
+
+.candidate-info strong {
+    color: #111827;
+}
+
+
+/* ========================================
+   DEVELOPMENT PLAN
+   ======================================== */
+
+.development-plan {
+    margin-top: 18px;
+
+    padding: 16px;
+
+    background: #f8fafc;
+
+    border-radius: 12px;
+
+    border-left: 4px solid #1d4ed8;
+}
+
+.development-plan h4 {
+    margin: 0 0 8px;
+
+    font-size: 16px;
+
+    color: #1e3a8a;
+}
+
+.development-plan p {
+    margin: 0;
+
+    font-size: 14px;
+    line-height: 1.7;
+
+    color: #374151;
+}
+
+
+/* ========================================
+   EMPTY / LOADING MESSAGE
+   ======================================== */
+
+.empty-message {
+    grid-column: 1 / -1;
+
+    text-align: center;
+
+    padding: 50px 20px;
+
+    background: #ffffff;
+
+    border-radius: 18px;
+
+    border: 1px solid #e5e7eb;
+
+    box-shadow:
+        0 5px 20px rgba(0, 0, 0, 0.06);
+}
+
+.empty-icon {
+    font-size: 55px;
+    margin-bottom: 10px;
+}
+
+.empty-message h3 {
+    margin: 10px 0;
+
+    color: #1f2937;
+}
+
+.empty-message p {
+    color: #6b7280;
+}
+
+
+/* ========================================
+   MOBILE
+   ======================================== */
+
+@media (max-width: 600px) {
+
+    .candidate-grid {
+        grid-template-columns: 1fr;
+
+        padding: 0 12px;
+
+        gap: 18px;
+    }
+
+    .candidate-card-photo {
+        height: 300px;
+    }
+
+    .candidate-card-content {
+        padding: 18px;
+    }
+
+    .candidate-card-content h3 {
+        font-size: 21px;
+    }
+
+    .candidate-info p {
+        font-size: 14px;
+    }
+
+    .development-plan {
+        padding: 14px;
+    }
+}
+
+
+/* ========================================
+   TABLET
+   ======================================== */
+
+@media (min-width: 601px) and (max-width: 900px) {
+
+    .candidate-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .candidate-card-photo {
+        height: 260px;
+    }
+}
 
 /* ========================================
    MOBILE ADMIN
