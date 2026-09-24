@@ -2,120 +2,104 @@
 <html lang="hi">
 
 <head>
-
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
-
-    <title>Login - Aspura Portal</title>
+    <title>Candidate / Admin Login - Aspura</title>
 
     <link rel="stylesheet" href="style.css">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <script src="config.js"></script>
-
 </head>
 
-
 <body>
-
 
 <header class="header">
 
     <div class="logo-area">
-
-        <div class="village-icon">
-            🏡
-        </div>
+        <div class="village-icon">🏡</div>
 
         <div>
-
             <h1>ASPURA</h1>
-
-            <p>
-                सरपंच उम्मीदवार सूचना पोर्टल
-            </p>
-
+            <p>सरपंच उम्मीदवार सूचना पोर्टल</p>
         </div>
-
     </div>
-
 
     <button
         class="login-btn"
         onclick="window.location.href='index.html'">
-
         Home
-
     </button>
 
 </header>
 
 
-
 <main class="form-container">
-
 
     <div class="form-card">
 
-
-        <h2>Login</h2>
-
+        <h2>Candidate / Admin Login</h2>
 
         <p class="form-intro">
-
-            Candidate या Admin अपने account से login करें।
-
+            अपने registered email और password से login करें।
         </p>
-
 
 
         <form id="loginForm">
 
-
-            <label>
-                Email
+            <label for="email">
+                Email Address
             </label>
-
 
             <input
                 type="email"
                 id="email"
-                placeholder="अपना email डालें"
-                required>
+                placeholder="Enter your email"
+                required
+            >
 
 
-
-            <label>
+            <label for="password">
                 Password
             </label>
-
 
             <input
                 type="password"
                 id="password"
-                placeholder="Password"
-                required>
-
+                placeholder="Enter your password"
+                required
+            >
 
 
             <button
                 type="submit"
-                class="primary-btn submit-btn">
-
+                class="submit-btn"
+                id="loginBtn">
                 Login
-
             </button>
-
-
-            <div id="message"></div>
-
 
         </form>
 
 
+        <div id="message"></div>
+
+
+        <!-- FORGOT PASSWORD -->
+
+        <div class="register-link">
+
+            <button
+                type="button"
+                class="forgot-btn"
+                onclick="window.location.href='forgot-password.html'">
+                🔐 Password भूल गए?
+            </button>
+
+        </div>
+
+
+        <!-- CREATE ACCOUNT -->
 
         <div class="register-link">
 
@@ -123,204 +107,110 @@
                 Candidate का account नहीं है?
             </p>
 
-
             <button
+                type="button"
                 class="secondary-btn"
                 onclick="window.location.href='signup.html'">
-
                 नया Candidate Account बनाएं
-
             </button>
 
         </div>
 
-
     </div>
-
 
 </main>
 
 
-
 <script>
 
-
-const supabaseClient =
-    window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_PUBLISHABLE_KEY
-    );
-
+const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+);
 
 
 document
     .getElementById("loginForm")
-    .addEventListener(
-        "submit",
-        async function(event) {
+    .addEventListener("submit", async function(event) {
+
+        event.preventDefault();
+
+        const email =
+            document.getElementById("email").value.trim();
+
+        const password =
+            document.getElementById("password").value;
+
+        const loginBtn =
+            document.getElementById("loginBtn");
+
+        const message =
+            document.getElementById("message");
 
 
-            event.preventDefault();
+        loginBtn.disabled = true;
+        loginBtn.textContent = "Login हो रहा है...";
+
+        message.innerHTML = "";
 
 
-            const message =
-                document.getElementById(
-                    "message"
-                );
+        try {
 
-
-            message.textContent =
-                "Login हो रहा है...";
-
-
-            message.style.color =
-                "#333";
-
-
-            const email =
-                document
-                .getElementById("email")
-                .value
-                .trim();
-
-
-            const password =
-                document
-                .getElementById("password")
-                .value;
-
-
-
-            try {
-
-
-                const {
-                    data,
-                    error
-                } =
-                await supabaseClient.auth
-                .signInWithPassword({
-
+            const { data, error } =
+                await supabaseClient.auth.signInWithPassword({
                     email: email,
-
                     password: password
-
                 });
 
 
-
-                if (error) {
-
-                    throw error;
-
-                }
-
-
-
-                if (!data.user) {
-
-                    throw new Error(
-                        "Login failed."
-                    );
-
-                }
-
-
-
-                /* CHECK USER ROLE */
-
-                const {
-                    data: profile,
-                    error: profileError
-                } =
-                await supabaseClient
-                .from("profiles")
-                .select("role")
-                .eq(
-                    "id",
-                    data.user.id
-                )
-                .single();
-
-
-
-                if (profileError) {
-
-                    throw profileError;
-
-                }
-
-
-
-                if (
-                    profile &&
-                    profile.role === "admin"
-                ) {
-
-
-                    message.textContent =
-                        "✅ Admin login successful. Redirecting...";
-
-
-                    setTimeout(
-                        function() {
-
-                            window.location.href =
-                                "admin.html";
-
-                        },
-                        700
-                    );
-
-
-                } else {
-
-
-                    message.textContent =
-                        "✅ Login successful. Redirecting...";
-
-
-                    setTimeout(
-                        function() {
-
-                            window.location.href =
-                                "candidate.html";
-
-                        },
-                        700
-                    );
-
-                }
-
-
-
-            } catch (error) {
-
-
-                console.error(error);
-
-
-                message.textContent =
-                    "❌ " +
-                    (
-                        error.message ||
-                        "Email या password गलत है।"
-                    );
-
-
-                message.style.color =
-                    "red";
-
+            if (error) {
+                throw error;
             }
 
 
-        }
-    );
+            const user = data.user;
 
+
+            const { data: profile, error: profileError } =
+                await supabaseClient
+                    .from("profiles")
+                    .select("role")
+                    .eq("id", user.id)
+                    .maybeSingle();
+
+
+            if (profileError) {
+                throw profileError;
+            }
+
+
+            if (profile && profile.role === "admin") {
+
+                window.location.href = "admin.html";
+
+            } else {
+
+                window.location.href = "candidate.html";
+
+            }
+
+        } catch (error) {
+
+            console.error(error);
+
+            message.innerHTML = `
+                <div class="error-box">
+                    ❌ Email या Password गलत है।
+                </div>
+            `;
+
+            loginBtn.disabled = false;
+            loginBtn.textContent = "Login";
+        }
+
+    });
 
 </script>
 
-
 </body>
-
 </html>
