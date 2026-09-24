@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>उम्मीदवार पंजीकरण - Aspura</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+</head>
+
+<body>
+
+<header class="header">
+
+    <div class="logo-area">
+        <div class="village-icon">🏡</div>
+
+        <div>
+            <h1>ASPURA</h1>
+            <p>सरपंच उम्मीदवार सूचना पोर्टल</p>
+        </div>
+    </div>
+
+    <button class="login-btn"
+            onclick="window.location.href='index.html'">
+        Home
+    </button>
+
+</header>
+
+
+<main class="form-container">
+
+    <div class="form-card">
+
+        <h2>उम्मीदवार पंजीकरण</h2>
+
+        <p class="form-intro">
+            सरपंच पद हेतु अपनी जानकारी दर्ज करें।
+            Submit करने के बाद आपकी जानकारी Admin द्वारा
+            verify की जाएगी।
+        </p>
+
+
+        <form id="candidateForm">
+
+            <label>पूरा नाम *</label>
+
+            <input
+                type="text"
+                id="fullName"
+                placeholder="पूरा नाम"
+                required>
+
+
+            <label>मोबाइल नंबर *</label>
+
+            <input
+                type="tel"
+                id="mobile"
+                placeholder="10 अंकों का मोबाइल नंबर"
+                maxlength="10"
+                pattern="[0-9]{10}"
+                required>
+
+
+            <label>पूरा पता *</label>
+
+            <textarea
+                id="address"
+                placeholder="अपना पूरा पता लिखें"
+                required></textarea>
+
+
+            <label>जन्म तिथि *</label>
+
+            <input
+                type="date"
+                id="dob"
+                required>
+
+
+            <label>आयु</label>
+
+            <input
+                type="text"
+                id="age"
+                placeholder="DOB से automatically calculate होगी"
+                readonly>
+
+
+            <label>शैक्षणिक योग्यता *</label>
+
+            <input
+                type="text"
+                id="education"
+                placeholder="जैसे 12वीं, B.A., M.A."
+                required>
+
+
+            <label>उम्मीदवार का फोटो *</label>
+
+            <input
+                type="file"
+                id="photo"
+                accept="image/jpeg,image/png,image/webp"
+                required>
+
+            <small>
+                JPG, PNG या WebP — अधिकतम 5 MB
+            </small>
+
+
+            <label>गाँव के विकास के लिए आपकी योजनाएँ *</label>
+
+            <textarea
+                id="developmentPlan"
+                rows="6"
+                placeholder="गाँव के विकास के लिए आपकी प्रमुख योजनाएँ और प्राथमिकताएँ..."
+                required></textarea>
+
+
+            <label class="checkbox-row">
+
+                <input
+                    type="checkbox"
+                    id="showMobile">
+
+                <span>
+                    मेरा मोबाइल नंबर public profile पर दिखाएँ
+                </span>
+
+            </label>
+
+
+            <button
+                type="submit"
+                class="primary-btn submit-btn">
+
+                Registration Submit करें
+
+            </button>
+
+            <div id="message"></div>
+
+        </form>
+
+    </div>
+
+</main>
+
+
+<script>
+
+const supabaseClient =
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY
+    );
+
+
+const dobInput =
+    document.getElementById("dob");
+
+const ageInput =
+    document.getElementById("age");
+
+
+/* ========================================
+   AGE CALCULATION
+======================================== */
+
+dobInput.addEventListener("change", function () {
+
+    const dob = new Date(this.value);
+    const today = new Date();
+
+    if (isNaN(dob.getTime())) {
+        ageInput.value = "";
+        return;
+    }
+
+    let age =
+        today.getFullYear() -
+        dob.getFullYear();
+
+    const monthDifference =
+        today.getMonth() -
+        dob.getMonth();
+
+    if (
+        monthDifference < 0 ||
+        (
+            monthDifference === 0 &&
+            today.getDate() < dob.getDate()
+        )
+    ) {
+        age--;
+    }
+
+    ageInput.value = age + " वर्ष";
+
+});
+
+
+/* ========================================
+   FORM SUBMIT
+======================================== */
+
+document
+    .getElementById("candidateForm")
+    .addEventListener("submit", async function (event) {
+
+        event.preventDefault();
+
+        const message =
+            document.getElementById("message");
+
+        message.textContent =
+            "Registration submit हो रहा है...";
+
+
+        try {
+
+            const fullName =
+                document
+                .getElementById("fullName")
+                .value.trim();
+
+            const mobile =
+                document
+                .getElementById("mobile")
+                .value.trim();
+
+            const address =
+                document
+                .getElementById("address")
+                .value.trim();
+
+            const dob =
+                document
+                .getElementById("dob")
+                .value;
+
+            const education =
+                document
+                .getElementById("education")
+                .value.trim();
+
+            const developmentPlan =
+                document
+                .getElementById("developmentPlan")
+                .value.trim();
+
+            const showMobile =
+                document
+                .getElementById("showMobile")
+                .checked;
+
+            const photo =
+                document
+                .getElementById("photo")
+                .files[0];
+
+
+            /* MOBILE VALIDATION */
+
+            if (!/^[0-9]{10}$/.test(mobile)) {
+
+                throw new Error(
+                    "कृपया सही 10 अंकों का मोबाइल नंबर डालें।"
+                );
+
+            }
+
+
+            /* PHOTO VALIDATION */
+
+            if (!photo) {
+
+                throw new Error(
+                    "कृपया candidate photo चुनें।"
+                );
+
+            }
+
+            if (photo.size > 5 * 1024 * 1024) {
+
+                throw new Error(
+                    "Photo का size 5 MB से कम होना चाहिए।"
+                );
+
+            }
+
+
+            const allowedTypes = [
+                "image/jpeg",
+                "image/png",
+                "image/webp"
+            ];
+
+            if (!allowedTypes.includes(photo.type)) {
+
+                throw new Error(
+                    "केवल JPG, PNG या WebP photo allowed है।"
+                );
+
+            }
+
+
+            /* CURRENT USER */
+
+            const {
+                data: userData,
+                error: userError
+            } = await supabaseClient.auth.getUser();
+
+
+            if (userError || !userData.user) {
+
+                throw new Error(
+                    "पहले Candidate Login करना जरूरी है।"
+                );
+
+            }
+
+
+            const user =
+                userData.user;
+
+
+            /* PHOTO NAME */
+
+            const fileExtension =
+                photo.name
+                .split(".")
+                .pop()
+                .toLowerCase();
+
+            const fileName =
+                user.id +
+                "_" +
+                Date.now() +
+                "." +
+                fileExtension;
+
+
+            const filePath =
+                user.id + "/" + fileName;
+
+
+            /* UPLOAD PHOTO */
+
+            const {
+                error: uploadError
+            } = await supabaseClient.storage
+                .from("candidate-photos")
+                .upload(
+                    filePath,
+                    photo,
+                    {
+                        cacheControl: "3600",
+                        upsert: false
+                    }
+                );
+
+
+            if (uploadError) {
+
+                throw uploadError;
+
+            }
+
+
+            /* PUBLIC PHOTO URL */
+
+            const {
+                data: publicUrlData
+            } = supabaseClient.storage
+                .from("candidate-photos")
+                .getPublicUrl(filePath);
+
+
+            const photoUrl =
+                publicUrlData.publicUrl;
+
+
+            /* INSERT CANDIDATE */
+
+            const {
+                error: insertError
+            } = await supabaseClient
+                .from("candidates")
+                .insert({
+
+                    user_id: user.id,
+
+                    full_name: fullName,
+
+                    mobile: mobile,
+
+                    address: address,
+
+                    dob: dob,
+
+                    education: education,
+
+                    photo_path: photoUrl,
+
+                    development_plan:
+                        developmentPlan,
+
+                    show_mobile:
+                        showMobile,
+
+                    status: "pending"
+
+                });
+
+
+            if (insertError) {
+
+                throw insertError;
+
+            }
+
+
+            message.textContent =
+                "✅ आपकी जानकारी successfully submit हो गई है। Admin verification के बाद profile public होगी।";
+
+            message.style.color = "green";
+
+
+            document
+                .getElementById("candidateForm")
+                .reset();
+
+            ageInput.value = "";
+
+
+        } catch (error) {
+
+            console.error(error);
+
+            message.textContent =
+                "❌ " +
+                (error.message ||
+                "कुछ समस्या हुई।");
+
+            message.style.color = "red";
+
+        }
+
+    });
+
+</script>
+
+</body>
+</html>
