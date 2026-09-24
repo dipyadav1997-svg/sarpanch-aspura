@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="hi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Admin Panel - Aspura</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script src="config.js"></script>
+
+</head>
+
+
+<body>
+
+
+<header class="header">
+
+    <div class="logo-area">
+
+        <div class="village-icon">
+            🏡
+        </div>
+
+        <div>
+
+            <h1>ASPURA</h1>
+
+            <p>
+                Admin Control Panel
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <button
+        class="login-btn"
+        id="logoutBtn">
+
+        Logout
+
+    </button>
+
+</header>
+
+
+
+<main class="admin-container">
+
+
+    <div class="admin-header">
+
+        <div>
+
+            <h2>
+                Candidate Management
+            </h2>
+
+            <p>
+                सभी उम्मीदवारों की जानकारी यहाँ manage करें।
+            </p>
+
+        </div>
+
+
+        <button
+            class="secondary-btn"
+            onclick="window.location.href='index.html'">
+
+            Public Website
+
+        </button>
+
+    </div>
+
+
+
+    <!-- =====================================
+         STATISTICS
+    ====================================== -->
+
+    <div class="admin-stats">
+
+
+        <div class="stat-card">
+
+            <h3 id="totalCount">
+                0
+            </h3>
+
+            <p>
+                Total
+            </p>
+
+        </div>
+
+
+        <div class="stat-card pending-stat">
+
+            <h3 id="pendingCount">
+                0
+            </h3>
+
+            <p>
+                Pending
+            </p>
+
+        </div>
+
+
+        <div class="stat-card approved-stat">
+
+            <h3 id="approvedCount">
+                0
+            </h3>
+
+            <p>
+                Approved
+            </p>
+
+        </div>
+
+
+        <div class="stat-card hidden-stat">
+
+            <h3 id="hiddenCount">
+                0
+            </h3>
+
+            <p>
+                Hidden
+            </p>
+
+        </div>
+
+
+    </div>
+
+
+
+    <!-- =====================================
+         MESSAGE
+    ====================================== -->
+
+    <div id="adminMessage"></div>
+
+
+
+    <!-- =====================================
+         CANDIDATES
+    ====================================== -->
+
+    <section class="admin-candidates">
+
+        <h2>
+            Candidates
+        </h2>
+
+
+        <div id="candidateList">
+
+            <div class="loading-box">
+                Candidates load हो रहे हैं...
+            </div>
+
+        </div>
+
+    </section>
+
+
+</main>
+
+
+
+<script>
+
+
+/* ========================================
+   SUPABASE
+======================================== */
+
+const supabaseClient =
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY
+    );
+
+
+let currentUser = null;
+
+
+/* ========================================
+   ELEMENTS
+======================================== */
+
+const candidateList =
+    document.getElementById(
+        "candidateList"
+    );
+
+const adminMessage =
+    document.getElementById(
+        "adminMessage"
+    );
+
+
+
+/* ========================================
+   ADMIN CHECK
+======================================== */
+
+async function checkAdmin() {
+
+
+    const {
+        data: userData,
+        error: userError
+    } =
+    await supabaseClient.auth.getUser();
+
+
+    if (
+        userError ||
+        !userData.user
+    ) {
+
+        window.location.href =
+            "login.html";
+
+        return false;
+    }
+
+
+    currentUser =
+        userData.user;
+
+
+    const {
+        data: profile,
+        error: profileError
+    } =
+    await supabaseClient
+        .from("profiles")
+        .select("role")
+        .eq(
+            "id",
+            currentUser.id
+        )
+        .single();
+
+
+    if (
+        profileError ||
+        !profile ||
+        profile.role !== "admin"
+    ) {
+
+        alert(
+            "आपको Admin access नहीं है।"
+        );
+
+
+        window.location.href =
+            "candidate.html";
+
+
+        return false;
+    }
+
+
+    return true;
+
+}
+
+
+
+/* ========================================
+   LOAD CANDIDATES
+======================================== */
+
+async function loadCandidates() {
+
+
+    candidateList.innerHTML =
+        "<div class='loading-box'>Candidates load हो रहे हैं...</div>";
+
+
+    const {
+        data,
+        error
+    } =
+    await supabaseClient
+        .from("candidates")
+        .select("*")
+        .order(
+            "created_at",
+            {
+                ascending: false
+            }
+        );
+
+
+    if (error) {
+
+        console.error(error);
+
+
+        candidateList.innerHTML =
+            "<div class='error-box'>" +
+            "❌ Candidates load नहीं हो सके।" +
+            "</div>";
+
+        return;
+    }
+
+
+    updateStatistics(data);
+
+
+    if (!data || data.length === 0) {
+
+        candidateList.innerHTML =
+            "<div class='empty-admin'>" +
+            "<h3>अभी कोई candidate नहीं है</h3>" +
+            "<p>Candidate registration के बाद यहाँ दिखाई देंगे।</p>" +
+            "</div>";
+
+        return;
+    }
+
+
+    candidateList.innerHTML = "";
+
+
+    data.forEach(
+        function(candidate) {
+
+            candidateList.appendChild(
+                createCandidateCard(
+                    candidate
+                )
+            );
+
+        }
+    );
+
+}
+
+
+
+/* ========================================
+   STATISTICS
+======================================== */
+
+function updateStatistics(
+    candidates
+) {
+
+
+    const total =
+        candidates.length;
+
+
+    const pending =
+        candidates.filter(
+            c => c.status === "pending"
+        ).length;
+
+
+    const approved =
+        candidates.filter(
+            c => c.status === "approved"
+        ).length;
+
+
+    const hidden =
+        candidates.filter(
+            c => c.status === "hidden"
+        ).length;
+
+
+    document.getElementById(
+        "totalCount"
+    ).textContent =
+        total;
+
+
+    document.getElementById(
+        "pendingCount"
+    ).textContent =
+        pending;
+
+
+    document.getElementById(
+        "approvedCount"
+    ).textContent =
+        approved;
+
+
+    document.getElementById(
+        "hiddenCount"
+    ).textContent =
+        hidden;
+
+}
+
+
+
+/* ========================================
+   CREATE CARD
+======================================== */
+
+function createCandidateCard(
+    candidate
+) {
+
+
+    const card =
+        document.createElement(
+            "div"
+        );
+
+
+    card.className =
+        "admin-candidate-card";
+
+
+    const photo =
+        candidate.photo_path
+        ? candidate.photo_path
+        : "";
+
+
+    let statusClass =
+        "status-pending";
+
+
+    let statusText =
+        "⏳ Pending";
+
+
+    if (
+        candidate.status ===
+        "approved"
+    ) {
+
+        statusClass =
+            "status-approved";
+
+        statusText =
+            "✅ Approved";
+
+    }
+
+
+    if (
+        candidate.status ===
+        "hidden"
+    ) {
+
+        statusClass =
+            "status-hidden";
+
+        statusText =
+            "⚠️ Hidden";
+
+    }
+
+
+
+    card.innerHTML = `
+
+        <div class="admin-card-top">
+
+            ${
+                photo
+                ?
+                `<img
+                    src="${escapeHtml(photo)}"
+                    class="candidate-photo"
+                    alt="Candidate Photo">`
+                :
+                `<div class="no-photo">
+                    👤
+                </div>`
+            }
+
+
+            <div class="candidate-main-info">
+
+                <h3>
+                    ${escapeHtml(
+                        candidate.full_name
+                    )}
+                </h3>
+
+
+                <span
+                    class="candidate-status ${statusClass}">
+
+                    ${statusText}
+
+                </span>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="candidate-details">
+
+            <p>
+                <strong>📱 Mobile:</strong>
+                ${escapeHtml(
+                    candidate.mobile
+                )}
+            </p>
+
+
+            <p>
+                <strong>🏠 Address:</strong>
+                ${escapeHtml(
+                    candidate.address
+                )}
+            </p>
+
+
+            <p>
+                <strong>🎂 DOB:</strong>
+                ${escapeHtml(
+                    candidate.dob
+                )}
+            </p>
+
+
+            <p>
+                <strong>🎓 Education:</strong>
+                ${escapeHtml(
+                    candidate.education
+                )}
+            </p>
+
+
+            <p>
+                <strong>🏗️ Development Plans:</strong>
+            </p>
+
+
+            <div class="development-text">
+
+                ${escapeHtml(
+                    candidate.development_plan
+                )}
+
+            </div>
+
+        </div>
+
+
+
+        <div class="admin-actions">
+
+            ${
+                candidate.status !==
+                "approved"
+                ?
+                `<button
+                    class="approve-btn"
+                    onclick="changeStatus(
+                        '${candidate.id}',
+                        'approved'
+                    )">
+
+                    ✅ Approve
+
+                </button>`
+                :
+                `<button
+                    class="hide-btn"
+                    onclick="changeStatus(
+                        '${candidate.id}',
+                        'hidden'
+                    )">
+
+                    👁️ Hide
+
+                </button>`
+            }
+
+
+            ${
+                candidate.status !==
+                "pending"
+                ?
+                `<button
+                    class="pending-btn"
+                    onclick="changeStatus(
+                        '${candidate.id}',
+                        'pending'
+                    )">
+
+                    ↩ Pending
+
+                </button>`
+                :
+                ""
+            }
+
+
+            <button
+                class="delete-btn"
+                onclick="deleteCandidate(
+                    '${candidate.id}'
+                )">
+
+                🗑️ Delete
+
+            </button>
+
+        </div>
+
+    `;
+
+
+    return card;
+
+}
+
+
+
+/* ========================================
+   CHANGE STATUS
+======================================== */
+
+async function changeStatus(
+    candidateId,
+    newStatus
+) {
+
+
+    const confirmText =
+        newStatus === "approved"
+        ? "क्या आप इस candidate को approve करना चाहते हैं?"
+        : newStatus === "hidden"
+        ? "क्या आप इस candidate को hide करना चाहते हैं?"
+        : "क्या आप status को Pending करना चाहते हैं?";
+
+
+    if (!confirm(confirmText)) {
+
+        return;
+
+    }
+
+
+    const {
+        error
+    } =
+    await supabaseClient
+        .from("candidates")
+        .update({
+
+            status:
+                newStatus
+
+        })
+        .eq(
+            "id",
+            candidateId
+        );
+
+
+    if (error) {
+
+        console.error(error);
+
+
+        showAdminMessage(
+            "❌ Status update नहीं हो सका।",
+            "red"
+        );
+
+
+        return;
+    }
+
+
+    showAdminMessage(
+        "✅ Status successfully update हो गया।",
+        "green"
+    );
+
+
+    await loadCandidates();
+
+}
+
+
+
+/* ========================================
+   DELETE CANDIDATE
+======================================== */
+
+async function deleteCandidate(
+    candidateId
+) {
+
+
+    if (
+        !confirm(
+            "⚠️ क्या आप इस candidate को permanently delete करना चाहते हैं?"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    const {
+        error
+    } =
+    await supabaseClient
+        .from("candidates")
+        .delete()
+        .eq(
+            "id",
+            candidateId
+        );
+
+
+    if (error) {
+
+        console.error(error);
+
+
+        showAdminMessage(
+            "❌ Candidate delete नहीं हो सका।",
+            "red"
+        );
+
+
+        return;
+    }
+
+
+    showAdminMessage(
+        "✅ Candidate successfully delete हो गया।",
+        "green"
+    );
+
+
+    await loadCandidates();
+
+}
+
+
+
+/* ========================================
+   MESSAGE
+======================================== */
+
+function showAdminMessage(
+    text,
+    color
+) {
+
+    adminMessage.textContent =
+        text;
+
+    adminMessage.style.color =
+        color;
+
+    adminMessage.style.textAlign =
+        "center";
+
+    adminMessage.style.margin =
+        "15px 0";
+
+}
+
+
+
+/* ========================================
+   SECURITY
+   Prevent HTML injection
+======================================== */
+
+function escapeHtml(
+    value
+) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+
+        return "";
+
+    }
+
+
+    return String(value)
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
+
+
+
+/* ========================================
+   LOGOUT
+======================================== */
+
+document
+    .getElementById("logoutBtn")
+    .addEventListener(
+        "click",
+        async function() {
+
+
+            await supabaseClient.auth.signOut();
+
+
+            window.location.href =
+                "login.html";
+
+        }
+    );
+
+
+
+/* ========================================
+   START
+======================================== */
+
+(async function() {
+
+
+    const isAdmin =
+        await checkAdmin();
+
+
+    if (isAdmin) {
+
+        await loadCandidates();
+
+    }
+
+})();
+
+</script>
+
+
+</body>
+
+</html>
