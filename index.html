@@ -5,39 +5,34 @@
 
     <meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Aspura Sarpanch Candidate Portal</title>
 
     <link rel="stylesheet" href="style.css">
+
+    <!-- SUPABASE -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- SUPABASE CONFIG -->
+    <script src="config.js"></script>
 
 </head>
 
 
 <body>
 
-
-<!-- ========================================
-     HEADER
-======================================== -->
-
 <header class="header">
 
-
     <div class="logo-area">
-
 
         <div class="village-icon">
             🏡
         </div>
 
-
         <div>
 
-            <h1>
-                ASPURA
-            </h1>
+            <h1>ASPURA</h1>
 
             <p>
                 सरपंच उम्मीदवार सूचना पोर्टल
@@ -45,9 +40,7 @@
 
         </div>
 
-
     </div>
-
 
 
     <button
@@ -58,25 +51,17 @@
 
     </button>
 
-
 </header>
 
 
 
-<!-- ========================================
-     HERO
-======================================== -->
-
 <section class="hero">
 
-
     <div class="hero-content">
-
 
         <h2>
             हमारे गाँव के सरपंच उम्मीदवार
         </h2>
-
 
         <p>
 
@@ -87,14 +72,7 @@
         </p>
 
 
-
         <div class="hero-buttons">
-
-
-            <!-- IMPORTANT:
-                 Candidate Registration
-                 अब सीधे Signup page पर जाएगा
-            -->
 
             <button
                 onclick="window.location.href='signup.html'"
@@ -105,7 +83,6 @@
             </button>
 
 
-
             <button
                 onclick="document.getElementById('candidates').scrollIntoView()"
                 class="secondary-btn">
@@ -114,28 +91,19 @@
 
             </button>
 
-
         </div>
 
-
     </div>
-
 
 </section>
 
 
 
-<!-- ========================================
-     ABOUT
-======================================== -->
-
 <section class="about">
-
 
     <h2>
         पोर्टल के बारे में
     </h2>
-
 
     <p>
 
@@ -147,19 +115,13 @@
 
     </p>
 
-
 </section>
 
 
 
-<!-- ========================================
-     CANDIDATES
-======================================== -->
-
 <section
     id="candidates"
     class="candidates-section">
-
 
     <h2>
         सरपंच उम्मीदवार
@@ -174,59 +136,43 @@
     </p>
 
 
+    <!-- CANDIDATES WILL LOAD HERE -->
 
     <div
         id="candidateList"
         class="candidate-grid">
 
-
         <div class="empty-message">
 
-
             <div class="empty-icon">
-                👤
+                ⏳
             </div>
 
-
             <h3>
-                अभी कोई उम्मीदवार उपलब्ध नहीं है
+                उम्मीदवारों की जानकारी लोड हो रही है...
             </h3>
 
-
             <p>
-
-                उम्मीदवार अपना registration करके
-                profile submit कर सकते हैं।
-
+                कृपया कुछ क्षण प्रतीक्षा करें।
             </p>
-
 
         </div>
 
-
     </div>
-
 
 </section>
 
 
 
-<!-- ========================================
-     FOOTER
-======================================== -->
-
 <footer>
-
 
     <h3>
         ASPURA
     </h3>
 
-
     <p>
         Sarpanch Candidate Information Portal
     </p>
-
 
     <p class="footer-note">
 
@@ -235,13 +181,13 @@
 
     </p>
 
-
 </footer>
 
 
 
-<script src="script.js"></script>
+<!-- PUBLIC CANDIDATE SCRIPT -->
 
+<script src="script.js"></script>
 
 </body>
 
