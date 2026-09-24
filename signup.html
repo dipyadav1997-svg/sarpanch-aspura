@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="hi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Candidate Registration - Aspura</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+
+</head>
+
+
+<body>
+
+
+<header class="header">
+
+    <div class="logo-area">
+
+        <div class="village-icon">
+            🏡
+        </div>
+
+        <div>
+
+            <h1>ASPURA</h1>
+
+            <p>
+                सरपंच उम्मीदवार सूचना पोर्टल
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <button
+        class="login-btn"
+        onclick="window.location.href='index.html'">
+
+        Home
+
+    </button>
+
+</header>
+
+
+
+<main class="form-container">
+
+
+    <div class="form-card">
+
+
+        <h2>Candidate Account बनाएं</h2>
+
+
+        <p class="form-intro">
+
+            उम्मीदवार पहले अपना account बनाएँ।
+            इसके बाद login करके अपनी पूरी जानकारी भर सकते हैं।
+
+        </p>
+
+
+
+        <form id="signupForm">
+
+
+            <label>
+                पूरा नाम *
+            </label>
+
+
+            <input
+                type="text"
+                id="fullName"
+                placeholder="अपना पूरा नाम"
+                required>
+
+
+
+            <label>
+                Email *
+            </label>
+
+
+            <input
+                type="email"
+                id="email"
+                placeholder="अपना email address"
+                required>
+
+
+
+            <label>
+                Password *
+            </label>
+
+
+            <input
+                type="password"
+                id="password"
+                placeholder="कम से कम 8 characters"
+                minlength="8"
+                required>
+
+
+
+            <label>
+                Confirm Password *
+            </label>
+
+
+            <input
+                type="password"
+                id="confirmPassword"
+                placeholder="Password दोबारा डालें"
+                minlength="8"
+                required>
+
+
+
+            <button
+                type="submit"
+                class="primary-btn submit-btn">
+
+                Account बनाएं
+
+            </button>
+
+
+            <div id="message"></div>
+
+
+        </form>
+
+
+
+        <div class="register-link">
+
+            <p>
+                पहले से account है?
+            </p>
+
+
+            <button
+                class="secondary-btn"
+                onclick="window.location.href='login.html'">
+
+                Login करें
+
+            </button>
+
+        </div>
+
+
+    </div>
+
+
+</main>
+
+
+
+<script>
+
+
+const supabaseClient =
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY
+    );
+
+
+
+document
+    .getElementById("signupForm")
+    .addEventListener(
+        "submit",
+        async function(event) {
+
+
+            event.preventDefault();
+
+
+            const message =
+                document.getElementById(
+                    "message"
+                );
+
+
+            message.textContent =
+                "Account बनाया जा रहा है...";
+
+
+            message.style.color =
+                "#333";
+
+
+
+            const fullName =
+                document
+                .getElementById("fullName")
+                .value
+                .trim();
+
+
+            const email =
+                document
+                .getElementById("email")
+                .value
+                .trim();
+
+
+            const password =
+                document
+                .getElementById("password")
+                .value;
+
+
+            const confirmPassword =
+                document
+                .getElementById("confirmPassword")
+                .value;
+
+
+
+            try {
+
+
+                if (
+                    password !==
+                    confirmPassword
+                ) {
+
+                    throw new Error(
+                        "दोनों passwords समान नहीं हैं।"
+                    );
+
+                }
+
+
+
+                if (password.length < 8) {
+
+                    throw new Error(
+                        "Password कम से कम 8 characters का होना चाहिए।"
+                    );
+
+                }
+
+
+
+                const {
+                    data,
+                    error
+                } =
+                await supabaseClient.auth
+                .signUp({
+
+                    email: email,
+
+                    password: password,
+
+                    options: {
+
+                        data: {
+
+                            full_name:
+                                fullName
+
+                        }
+
+                    }
+
+                });
+
+
+
+                if (error) {
+
+                    throw error;
+
+                }
+
+
+
+                message.textContent =
+                    "✅ Account successfully बन गया है।";
+
+
+                message.style.color =
+                    "green";
+
+
+
+                /*
+                 * यदि email confirmation enabled है,
+                 * तो user को email verify करना होगा।
+                 */
+
+
+                if (
+                    data.user &&
+                    !data.session
+                ) {
+
+
+                    message.innerHTML =
+                        "✅ Account बन गया है।<br><br>" +
+                        "📧 अपने email inbox में verification link खोलें।<br>" +
+                        "फिर Login करके अपनी candidate details भरें।";
+
+
+                } else {
+
+
+                    setTimeout(
+                        function() {
+
+                            window.location.href =
+                                "candidate.html";
+
+                        },
+                        1000
+                    );
+
+                }
+
+
+            } catch (error) {
+
+
+                console.error(error);
+
+
+                message.textContent =
+                    "❌ " +
+                    (
+                        error.message ||
+                        "Account create नहीं हो सका।"
+                    );
+
+
+                message.style.color =
+                    "red";
+
+            }
+
+
+        }
+    );
+
+
+</script>
+
+
+</body>
+
+</html>
