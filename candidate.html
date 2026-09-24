@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="hi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Candidate Dashboard - Aspura</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script src="config.js"></script>
+
+</head>
+
+
+<body>
+
+
+<header class="header">
+
+    <div class="logo-area">
+
+        <div class="village-icon">
+            🏡
+        </div>
+
+        <div>
+
+            <h1>ASPURA</h1>
+
+            <p>
+                Candidate Dashboard
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <button
+        class="login-btn"
+        id="logoutBtn">
+
+        Logout
+
+    </button>
+
+</header>
+
+
+
+<main class="form-container">
+
+
+    <div class="form-card">
+
+
+        <h2>Candidate Dashboard</h2>
+
+
+        <p class="form-intro">
+            अपनी उम्मीदवार जानकारी यहाँ भरें या अपडेट करें।
+        </p>
+
+
+        <div id="statusMessage"></div>
+
+
+        <form id="candidateForm">
+
+
+            <label>
+                पूरा नाम *
+            </label>
+
+            <input
+                type="text"
+                id="fullName"
+                required>
+
+
+            <label>
+                मोबाइल नंबर *
+            </label>
+
+            <input
+                type="tel"
+                id="mobile"
+                maxlength="10"
+                pattern="[0-9]{10}"
+                required>
+
+
+            <label>
+                पूरा पता *
+            </label>
+
+            <textarea
+                id="address"
+                rows="3"
+                required></textarea>
+
+
+            <label>
+                जन्म तिथि *
+            </label>
+
+            <input
+                type="date"
+                id="dob"
+                required>
+
+
+            <label>
+                आयु
+            </label>
+
+            <input
+                type="text"
+                id="age"
+                readonly
+                placeholder="DOB से automatic calculate होगी">
+
+
+            <label>
+                शैक्षणिक योग्यता *
+            </label>
+
+            <input
+                type="text"
+                id="education"
+                placeholder="जैसे 12वीं, B.A., M.A."
+                required>
+
+
+            <label>
+                उम्मीदवार का फोटो
+            </label>
+
+            <input
+                type="file"
+                id="photo"
+                accept="image/jpeg,image/png,image/webp">
+
+
+            <small>
+                JPG, PNG या WebP — अधिकतम 5 MB
+            </small>
+
+
+            <div id="currentPhoto"></div>
+
+
+            <label>
+                गाँव के विकास के लिए आपकी योजनाएँ *
+            </label>
+
+            <textarea
+                id="developmentPlan"
+                rows="6"
+                placeholder="गाँव के विकास के लिए अपनी योजनाएँ और प्राथमिकताएँ लिखें..."
+                required></textarea>
+
+
+            <label class="checkbox-row">
+
+                <input
+                    type="checkbox"
+                    id="showMobile">
+
+                <span>
+                    मेरा मोबाइल नंबर public profile पर दिखाएँ
+                </span>
+
+            </label>
+
+
+            <button
+                type="submit"
+                class="primary-btn submit-btn"
+                id="submitBtn">
+
+                Profile Submit करें
+
+            </button>
+
+
+            <div id="message"></div>
+
+
+        </form>
+
+
+    </div>
+
+</main>
+
+
+
+<script>
+
+
+/* ========================================
+   SUPABASE
+======================================== */
+
+const supabaseClient =
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY
+    );
+
+
+let currentUser = null;
+
+let existingCandidate = null;
+
+
+/* ========================================
+   ELEMENTS
+======================================== */
+
+const form =
+    document.getElementById("candidateForm");
+
+const message =
+    document.getElementById("message");
+
+const statusMessage =
+    document.getElementById("statusMessage");
+
+const dobInput =
+    document.getElementById("dob");
+
+const ageInput =
+    document.getElementById("age");
+
+
+
+/* ========================================
+   AGE CALCULATION
+======================================== */
+
+dobInput.addEventListener(
+    "change",
+    calculateAge
+);
+
+
+function calculateAge() {
+
+    if (!dobInput.value) {
+
+        ageInput.value = "";
+
+        return;
+    }
+
+
+    const dob =
+        new Date(
+            dobInput.value + "T00:00:00"
+        );
+
+    const today =
+        new Date();
+
+
+    let age =
+        today.getFullYear() -
+        dob.getFullYear();
+
+
+    const monthDifference =
+        today.getMonth() -
+        dob.getMonth();
+
+
+    if (
+        monthDifference < 0 ||
+        (
+            monthDifference === 0 &&
+            today.getDate() < dob.getDate()
+        )
+    ) {
+
+        age--;
+
+    }
+
+
+    ageInput.value =
+        age + " वर्ष";
+
+}
+
+
+
+/* ========================================
+   LOAD CURRENT USER
+======================================== */
+
+async function loadCandidate() {
+
+
+    const {
+        data: userData,
+        error: userError
+    } =
+    await supabaseClient.auth.getUser();
+
+
+    if (
+        userError ||
+        !userData.user
+    ) {
+
+        window.location.href =
+            "login.html";
+
+        return;
+    }
+
+
+    currentUser =
+        userData.user;
+
+
+    await loadCandidateProfile();
+
+}
+
+
+
+/* ========================================
+   LOAD PROFILE
+======================================== */
+
+async function loadCandidateProfile() {
+
+
+    const {
+        data,
+        error
+    } =
+    await supabaseClient
+        .from("candidates")
+        .select("*")
+        .eq(
+            "user_id",
+            currentUser.id
+        )
+        .maybeSingle();
+
+
+    if (error) {
+
+        console.error(error);
+
+        message.textContent =
+            "❌ Profile load नहीं हो सकी।";
+
+        message.style.color =
+            "red";
+
+        return;
+    }
+
+
+    if (!data) {
+
+        statusMessage.innerHTML =
+            "<p>📝 अभी आपकी candidate profile submit नहीं हुई है।</p>";
+
+        return;
+    }
+
+
+    existingCandidate =
+        data;
+
+
+    /* ====================================
+       FILL FORM
+    ==================================== */
+
+    document.getElementById(
+        "fullName"
+    ).value =
+        data.full_name || "";
+
+
+    document.getElementById(
+        "mobile"
+    ).value =
+        data.mobile || "";
+
+
+    document.getElementById(
+        "address"
+    ).value =
+        data.address || "";
+
+
+    document.getElementById(
+        "dob"
+    ).value =
+        data.dob || "";
+
+
+    calculateAge();
+
+
+    document.getElementById(
+        "education"
+    ).value =
+        data.education || "";
+
+
+    document.getElementById(
+        "developmentPlan"
+    ).value =
+        data.development_plan || "";
+
+
+    document.getElementById(
+        "showMobile"
+    ).checked =
+        data.show_mobile || false;
+
+
+
+    /* ====================================
+       STATUS
+    ==================================== */
+
+    if (data.status === "pending") {
+
+        statusMessage.innerHTML =
+            "<div class='status-box pending'>" +
+            "⏳ आपकी profile Admin verification के लिए pending है।" +
+            "</div>";
+
+    }
+
+
+    else if (data.status === "approved") {
+
+        statusMessage.innerHTML =
+            "<div class='status-box approved'>" +
+            "✅ आपकी profile Admin द्वारा approved है।" +
+            "</div>";
+
+    }
+
+
+    else if (data.status === "hidden") {
+
+        statusMessage.innerHTML =
+            "<div class='status-box hidden'>" +
+            "⚠️ आपकी profile अभी public नहीं है।" +
+            "</div>";
+
+    }
+
+
+
+    /* ====================================
+       CURRENT PHOTO
+    ==================================== */
+
+    if (data.photo_path) {
+
+        document.getElementById(
+            "currentPhoto"
+        ).innerHTML =
+
+            "<p>Current Photo:</p>" +
+
+            "<img src='" +
+            data.photo_path +
+            "' alt='Candidate Photo' " +
+            "style='max-width:160px;border-radius:10px;margin:10px 0;'>";
+
+    }
+
+
+    document.getElementById(
+        "submitBtn"
+    ).textContent =
+        "Profile Update करें";
+
+}
+
+
+
+/* ========================================
+   SUBMIT / UPDATE PROFILE
+======================================== */
+
+form.addEventListener(
+    "submit",
+    async function(event) {
+
+
+        event.preventDefault();
+
+
+        message.textContent =
+            "Profile save हो रही है...";
+
+        message.style.color =
+            "#333";
+
+
+        try {
+
+
+            const fullName =
+                document.getElementById(
+                    "fullName"
+                ).value.trim();
+
+
+            const mobile =
+                document.getElementById(
+                    "mobile"
+                ).value.trim();
+
+
+            const address =
+                document.getElementById(
+                    "address"
+                ).value.trim();
+
+
+            const dob =
+                document.getElementById(
+                    "dob"
+                ).value;
+
+
+            const education =
+                document.getElementById(
+                    "education"
+                ).value.trim();
+
+
+            const developmentPlan =
+                document.getElementById(
+                    "developmentPlan"
+                ).value.trim();
+
+
+            const showMobile =
+                document.getElementById(
+                    "showMobile"
+                ).checked;
+
+
+            const photoInput =
+                document.getElementById(
+                    "photo"
+                );
+
+
+            const photo =
+                photoInput.files[0];
+
+
+
+            /* MOBILE */
+
+            if (
+                !/^[0-9]{10}$/.test(
+                    mobile
+                )
+            ) {
+
+                throw new Error(
+                    "कृपया सही 10 अंकों का मोबाइल नंबर डालें।"
+                );
+
+            }
+
+
+
+            /* PHOTO */
+
+            let photoUrl =
+                existingCandidate
+                ? existingCandidate.photo_path
+                : null;
+
+
+            if (photo) {
+
+
+                if (
+                    photo.size >
+                    5 * 1024 * 1024
+                ) {
+
+                    throw new Error(
+                        "Photo का size 5 MB से कम होना चाहिए।"
+                    );
+
+                }
+
+
+                const allowedTypes = [
+
+                    "image/jpeg",
+                    "image/png",
+                    "image/webp"
+
+                ];
+
+
+                if (
+                    !allowedTypes.includes(
+                        photo.type
+                    )
+                ) {
+
+                    throw new Error(
+                        "केवल JPG, PNG या WebP photo allowed है।"
+                    );
+
+                }
+
+
+                const extension =
+                    photo.name
+                    .split(".")
+                    .pop()
+                    .toLowerCase();
+
+
+                const fileName =
+                    currentUser.id +
+                    "_" +
+                    Date.now() +
+                    "." +
+                    extension;
+
+
+                const filePath =
+                    currentUser.id +
+                    "/" +
+                    fileName;
+
+
+
+                const {
+                    error: uploadError
+                } =
+                await supabaseClient.storage
+                    .from("candidate-photos")
+                    .upload(
+                        filePath,
+                        photo,
+                        {
+                            cacheControl:
+                                "3600",
+                            upsert:
+                                false
+                        }
+                    );
+
+
+                if (uploadError) {
+
+                    throw uploadError;
+
+                }
+
+
+
+                const {
+                    data: publicUrlData
+                } =
+                supabaseClient.storage
+                    .from("candidate-photos")
+                    .getPublicUrl(
+                        filePath
+                    );
+
+
+                photoUrl =
+                    publicUrlData.publicUrl;
+
+            }
+
+
+
+            /* =================================
+               INSERT OR UPDATE
+            ================================= */
+
+
+            if (existingCandidate) {
+
+
+                const {
+                    error
+                } =
+                await supabaseClient
+                    .from("candidates")
+                    .update({
+
+                        full_name:
+                            fullName,
+
+                        mobile:
+                            mobile,
+
+                        address:
+                            address,
+
+                        dob:
+                            dob,
+
+                        education:
+                            education,
+
+                        photo_path:
+                            photoUrl,
+
+                        development_plan:
+                            developmentPlan,
+
+                        show_mobile:
+                            showMobile,
+
+                        /*
+                         * जब candidate profile
+                         * edit करता है तो दोबारा
+                         * Admin verification में जाएगी.
+                         */
+
+                        status:
+                            "pending"
+
+                    })
+                    .eq(
+                        "id",
+                        existingCandidate.id
+                    )
+                    .eq(
+                        "user_id",
+                        currentUser.id
+                    );
+
+
+                if (error) {
+
+                    throw error;
+
+                }
+
+
+                message.textContent =
+                    "✅ Profile successfully update हो गई है। Admin verification के बाद फिर से public होगी।";
+
+            }
+
+
+            else {
+
+
+                const {
+                    error
+                } =
+                await supabaseClient
+                    .from("candidates")
+                    .insert({
+
+                        user_id:
+                            currentUser.id,
+
+                        full_name:
+                            fullName,
+
+                        mobile:
+                            mobile,
+
+                        address:
+                            address,
+
+                        dob:
+                            dob,
+
+                        education:
+                            education,
+
+                        photo_path:
+                            photoUrl,
+
+                        development_plan:
+                            developmentPlan,
+
+                        show_mobile:
+                            showMobile,
+
+                        status:
+                            "pending"
+
+                    });
+
+
+                if (error) {
+
+                    throw error;
+
+                }
+
+
+                message.textContent =
+                    "✅ आपकी profile successfully submit हो गई है। Admin verification के बाद public होगी।";
+
+            }
+
+
+            message.style.color =
+                "green";
+
+
+            await loadCandidateProfile();
+
+
+        }
+
+        catch (error) {
+
+
+            console.error(error);
+
+
+            message.textContent =
+                "❌ " +
+                (
+                    error.message ||
+                    "कुछ समस्या हुई।"
+                );
+
+
+            message.style.color =
+                "red";
+
+        }
+
+    });
+
+
+
+/* ========================================
+   LOGOUT
+======================================== */
+
+document
+    .getElementById("logoutBtn")
+    .addEventListener(
+        "click",
+        async function() {
+
+
+            await supabaseClient.auth.signOut();
+
+
+            window.location.href =
+                "login.html";
+
+        }
+    );
+
+
+
+/* ========================================
+   START
+======================================== */
+
+loadCandidate();
+
+</script>
+
+</body>
+
+</html>
