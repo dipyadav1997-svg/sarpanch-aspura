@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Aspura Sarpanch Candidate Portal</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header class="header">
+
+    <div class="logo-area">
+        <div class="village-icon">🏡</div>
+
+        <div>
+            <h1>ASPURA</h1>
+            <p>सरपंच उम्मीदवार सूचना पोर्टल</p>
+        </div>
+    </div>
+
+    <button class="login-btn"
+            onclick="window.location.href='login.html'">
+        Candidate / Admin Login
+    </button>
+
+</header>
+
+
+<section class="hero">
+
+    <div class="hero-content">
+
+        <h2>हमारे गाँव के सरपंच उम्मीदवार</h2>
+
+        <p>
+            Aspura गाँव से सरपंच चुनाव हेतु इच्छुक उम्मीदवारों
+            की जानकारी एक ही स्थान पर।
+        </p>
+
+        <div class="hero-buttons">
+
+            <button
+                onclick="window.location.href='register.html'"
+                class="primary-btn">
+                उम्मीदवार पंजीकरण
+            </button>
+
+            <button
+                onclick="document.getElementById('candidates').scrollIntoView()"
+                class="secondary-btn">
+                उम्मीदवार देखें
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<section class="about">
+
+    <h2>पोर्टल के बारे में</h2>
+
+    <p>
+        इस पोर्टल का उद्देश्य Aspura गाँव के सरपंच पद के
+        उम्मीदवारों की मूल जानकारी, शैक्षणिक योग्यता और
+        गाँव के विकास के लिए उनकी प्राथमिकताओं को
+        व्यवस्थित रूप से उपलब्ध कराना है।
+    </p>
+
+</section>
+
+
+<section id="candidates" class="candidates-section">
+
+    <h2>सरपंच उम्मीदवार</h2>
+
+    <p class="section-subtitle">
+        केवल Admin द्वारा स्वीकृत उम्मीदवार यहाँ प्रदर्शित होंगे।
+    </p>
+
+
+    <div id="candidateList" class="candidate-grid">
+
+        <!-- Candidate profiles will appear here -->
+
+        <div class="empty-message">
+
+            <div class="empty-icon">👤</div>
+
+            <h3>अभी कोई उम्मीदवार उपलब्ध नहीं है</h3>
+
+            <p>
+                उम्मीदवार अपना registration करके
+                profile submit कर सकते हैं।
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<footer>
+
+    <h3>ASPURA</h3>
+
+    <p>
+        Sarpanch Candidate Information Portal
+    </p>
+
+    <p class="footer-note">
+        Candidate information is published after verification.
+    </p>
+
+</footer>
+
+
+<script src="script.js"></script>
+
+</body>
+</html>
